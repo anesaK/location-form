@@ -1,7 +1,7 @@
 import { FieldError, useFormContext } from "react-hook-form"
 
 interface IInputFieldProps {
-    key: string
+    fieldId: string
     name: string
     title: string
     defaultValue?: string
@@ -14,11 +14,11 @@ export default function InputField(props: IInputFieldProps) {
 
     return (
         <>
-            <label className="block mb-2 font-medium" htmlFor={props.key}>
+            <label className="block mb-2 font-medium" htmlFor={props.fieldId}>
                 {props.title}
             </label>
             <input
-                id={props.key}
+                id={props.fieldId}
                 {...register(props.name)}
                 defaultValue={props.defaultValue}
                 className={`${props.className} ${props.errorMessage

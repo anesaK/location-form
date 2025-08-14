@@ -1,15 +1,25 @@
 "use client";
-import React from "react";
-import { useForm, useFieldArray, Controller, FormProvider } from "react-hook-form";
+import React, { useEffect, useState } from "react";
+import {
+  useForm,
+  useFieldArray,
+  Controller,
+  FormProvider
+} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LocationsData } from "./location-types";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import Switch from "@mui/material/Switch";
 import InfoOutlineIcon from "@mui/icons-material/InfoOutlined";
-import countryCodeToFlagEmoji from "country-code-to-flag-emoji";
-import { Country, State } from "country-state-city";
 import InputField from "../fields/input-field";
 import { locationValidationSchema } from "./location-validation-schema";
+import countryCodeToFlagEmoji from "country-code-to-flag-emoji";
+import {
+  Country,
+  State,
+  type ICountry,
+  type IState
+} from "country-state-city";
 
 export default function LocationForm() {
   const form = useForm<LocationsData>({
@@ -25,17 +35,29 @@ export default function LocationForm() {
           state: "",
           zip: "",
           isParkingFee: false,
-          parkingInfo: "",
+          parkingInfo: ""
         }
       ]
     }
   });
 
-  const { control, register, handleSubmit, formState: { errors }, getValues } = form
+  const {
+    control,
+    register,
+    handleSubmit,
+    formState: { errors },
+    getValues,
+    setValue,
+    watch
+  } = form;
+
   const { fields, append, insert } = useFieldArray({
     control,
-    name: "locations",
+    name: "locations"
   });
+
+  const [countries, setCountries] = useState<ICountry[]>([]);
+  const [statesList, setStatesList] = useState<IState[][]>([]);
 
   const onSubmit = (data: LocationsData) => {
     console.log("Podaci o lokacijama:", data);
@@ -44,19 +66,65 @@ export default function LocationForm() {
   const handleCopy = (index: number) => {
     const values = getValues(`locations.${index}`);
     insert(index + 1, { ...values });
+    setStatesList((prev) => {
+      const newStates = [...prev];
+      newStates.splice(index + 1, 0, [...(prev[index] || [])]);
+      return newStates;
+    });
   };
 
-  const countryOptions = [
-    { value: "", label: "Select country" },
-    { value: "US", label: "United States" },
-    { value: "HR", label: "Croatia" },
-  ];
+  const addEmptyFormValues = () => {
+    append({
+      venue: "",
+      altName: "",
+      address: "",
+      city: "",
+      country: "",
+      state: "",
+      zip: "",
+      isParkingFee: false,
+      parkingInfo: ""
+    });
+    setStatesList((prev) => [...prev, []]);
+  };
 
-  const stateOptions = [
-    { value: "", label: "Select state" },
-    { value: "CA", label: "California" },
-    { value: "NY", label: "New York" },
-  ];
+  useEffect(() => {
+    const allCountries = Country.getAllCountries();
+    setCountries(allCountries);
+    setStatesList(fields.map(() => []));
+  }, []);
+
+const countriesWatched = watch("locations")?.map(loc => loc.country) || [];
+
+useEffect(() => {
+  // Ako nema lokacija, nema što raditi
+  if (!countriesWatched.length) return;
+
+  setStatesList(prev => {
+    const updatedStates = countriesWatched.map((countryCode, index) => {
+      // Ako nema country odabranog, vrati prazan array
+      if (!countryCode) return [];
+
+      const states = State.getStatesOfCountry(countryCode);
+
+      // Samo promijeni ako se razlikuje od postojećeg
+      if (JSON.stringify(prev[index]) === JSON.stringify(states)) {
+        return prev[index];
+      }
+      return states;
+    });
+
+    return updatedStates;
+  });
+
+  // Reset state field ako se promijenila država
+  countriesWatched.forEach((countryCode, index) => {
+    if (countryCode) {
+      setValue(`locations.${index}.state`, "");
+    }
+  });
+}, [JSON.stringify(countriesWatched), setValue]);
+
 
   return (
     <FormProvider {...form}>
@@ -72,19 +140,7 @@ export default function LocationForm() {
             </div>
             <button
               type="button"
-              onClick={() =>
-                append({
-                  venue: "",
-                  altName: "",
-                  address: "",
-                  city: "",
-                  country: "",
-                  state: "",
-                  zip: "",
-                  isParkingFee: false,
-                  parkingInfo: "",
-                })
-              }
+              onClick={addEmptyFormValues}
               className="border border-gray-400 bg-white font-bold text-black-700 px-3 py-1.5 rounded text-xs hover:bg-gray-200 transition"
             >
               + Add New Location
@@ -108,11 +164,29 @@ export default function LocationForm() {
               </div>
 
               <div className="mb-6">
-                <InputField key={`venue-${index}`} name={`locations.${index}.venue`} title={"Venue Title"} defaultValue={field.venue} errorMessage={errors.locations?.[index]?.venue} className={"w-full border rounded px-3 py-2 focus:outline-none focus:ring-2"} />
+                <InputField
+                  fieldId={`venue-${index}`}
+                  name={`locations.${index}.venue`}
+                  title={"Venue Title"}
+                  defaultValue={field.venue}
+                  errorMessage={errors.locations?.[index]?.venue}
+                  className={
+                    "w-full border rounded px-3 py-2 focus:outline-none focus:ring-2"
+                  }
+                />
               </div>
 
               <div className="mb-6">
-                <InputField key={`altName-${index}`} name={`locations.${index}.altName`} title={"Alt Name"} defaultValue={field.altName} errorMessage={errors.locations?.[index]?.altName} className={"w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"} />
+                <InputField
+                  fieldId={`altName-${index}`}
+                  name={`locations.${index}.altName`}
+                  title={"Alt Name"}
+                  defaultValue={field.altName}
+                  errorMessage={errors.locations?.[index]?.altName}
+                  className={
+                    "w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  }
+                />
                 <p className="text-gray-400 text-sm mt-2">
                   Example: Gym 1, Gym 2, Gym 3. Leave blank if not using.
                 </p>
@@ -122,21 +196,40 @@ export default function LocationForm() {
 
               <div className="flex space-x-4 mb-6">
                 <div className="flex-1">
-                  <InputField key={`address-${index}`} name={`locations.${index}.address`} title={"Address"} defaultValue={field.address} errorMessage={errors.locations?.[index]?.address} className={"w-full border rounded px-3 py-2 focus:outline-none focus:ring-2"} />
-
-
+                  <InputField
+                    fieldId={`address-${index}`}
+                    name={`locations.${index}.address`}
+                    title={"Address"}
+                    defaultValue={field.address}
+                    errorMessage={errors.locations?.[index]?.address}
+                    className={
+                      "w-full border rounded px-3 py-2 focus:outline-none focus:ring-2"
+                    }
+                  />
                 </div>
                 <div className="flex-1">
-                  <InputField key={`city-${index}`} name={`locations.${index}.city`} title={"City"} defaultValue={field.city} errorMessage={errors.locations?.[index]?.city} className={"w-full border rounded px-3 py-2 focus:outline-none focus:ring-2"} />
-
+                  <InputField
+                    fieldId={`city-${index}`}
+                    name={`locations.${index}.city`}
+                    title={"City"}
+                    defaultValue={field.city}
+                    errorMessage={errors.locations?.[index]?.city}
+                    className={
+                      "w-full border rounded px-3 py-2 focus:outline-none focus:ring-2"
+                    }
+                  />
                 </div>
               </div>
 
               <div className="mb-6">
-                <label className="block mb-2 font-medium" htmlFor={`country-${index}`}>
+                <label
+                  className="block mb-2 font-medium"
+                  htmlFor={`country-${index}`}
+                >
                   Country
                 </label>
                 <select
+                  key={`country-${index}`}
                   id={`country-${index}`}
                   {...register(`locations.${index}.country`)}
                   defaultValue={field.country}
@@ -145,9 +238,10 @@ export default function LocationForm() {
                     : "border-gray-300 focus:ring-blue-400"
                     }`}
                 >
-                  {countryOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
+                  <option value="">Select country</option>
+                  {countries.map((country) => (
+                    <option key={country.isoCode} value={country.isoCode}>
+                      {countryCodeToFlagEmoji(country.isoCode)} {country.name}
                     </option>
                   ))}
                 </select>
@@ -160,10 +254,14 @@ export default function LocationForm() {
 
               <div className="flex space-x-4 mb-6">
                 <div className="flex-1">
-                  <label className="block mb-2 font-medium" htmlFor={`state-${index}`}>
+                  <label
+                    className="block mb-2 font-medium"
+                    htmlFor={`state-${index}`}
+                  >
                     State
                   </label>
                   <select
+                    key={`state-${index}`}
                     id={`state-${index}`}
                     {...register(`locations.${index}.state`)}
                     defaultValue={field.state}
@@ -172,9 +270,10 @@ export default function LocationForm() {
                       : "border-gray-300 focus:ring-blue-400"
                       }`}
                   >
-                    {stateOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
+                    <option value="">Select state</option>
+                    {statesList[index]?.map((c) => (
+                      <option key={c.name} value={c.name}>
+                        {c.name}
                       </option>
                     ))}
                   </select>
@@ -184,11 +283,23 @@ export default function LocationForm() {
                     </p>
                   )}
                 </div>
+
                 <div className="flex-1">
-                  <InputField key={`zip-${index}`} name={`locations.${index}.zip`} title={"Zip/Postal"} defaultValue={field.city} errorMessage={errors.locations?.[index]?.zip} className={"w-full border rounded px-3 py-2 focus:outline-none focus:ring-2"} />
+                  <InputField
+                    fieldId={`zip-${index}`}
+                    name={`locations.${index}.zip`}
+                    title={"Zip/Postal"}
+                    defaultValue={field.zip}
+                    errorMessage={errors.locations?.[index]?.zip}
+                    className={
+                      "w-full border rounded px-3 py-2 focus:outline-none focus:ring-2"
+                    }
+                  />
                 </div>
               </div>
+
               <hr className="border-t border-gray-200 my-6" />
+
               <div className="flex items-center space-x-2 mb-6">
                 <Controller
                   name={`locations.${index}.isParkingFee`}
@@ -201,15 +312,23 @@ export default function LocationForm() {
                     />
                   )}
                 />
-                <label htmlFor={`locations.${index}.isParkingFee`} className="font-medium">
+                <label
+                  htmlFor={`locations.${index}.isParkingFee`}
+                  className="font-medium"
+                >
                   Parking Fee
                 </label>
               </div>
+
               <div className="mb-6">
-                <label className="block mb-2 font-medium" htmlFor={`parkingInfo-${index}`}>
+                <label
+                  className="block mb-2 font-medium"
+                  htmlFor={`parkingInfo-${index}`}
+                >
                   Parking Info
                 </label>
                 <textarea
+                  key={`parkingInfo-${index}`}
                   id={`parkingInfo-${index}`}
                   {...register(`locations.${index}.parkingInfo`)}
                   defaultValue={field.parkingInfo}
@@ -227,6 +346,7 @@ export default function LocationForm() {
               </div>
             </div>
           ))}
+
           <div className="w-full max-w-3xl flex justify-end space-x-4 mt-6">
             <button
               type="button"
