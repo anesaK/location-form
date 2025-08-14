@@ -1,11 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import {
-  useForm,
-  useFieldArray,
-  Controller,
-  FormProvider
-} from "react-hook-form";
+import {useForm, useFieldArray, Controller,FormProvider} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LocationsData } from "./location-types";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
@@ -13,30 +8,17 @@ import Switch from "@mui/material/Switch";
 import InfoOutlineIcon from "@mui/icons-material/InfoOutlined";
 import InputField from "../fields/input-field";
 import { locationValidationSchema } from "./location-validation-schema";
-import countryCodeToFlagEmoji from "country-code-to-flag-emoji";
-import {
-  Country,
-  State,
-  type ICountry,
-  type IState
-} from "country-state-city";
+import {Country, State,ICountry,IState} from "country-state-city";
+import StateSelectField from "../fields/state-select-field";
+import CountrySelectField from "../fields/country-select-field";
+import { locationInitialValues } from "./location-utils";
 
 export default function LocationForm() {
   const form = useForm<LocationsData>({
     resolver: zodResolver(locationValidationSchema),
     defaultValues: {
       locations: [
-        {
-          venue: "",
-          altName: "",
-          address: "",
-          city: "",
-          country: "",
-          state: "",
-          zip: "",
-          isParkingFee: false,
-          parkingInfo: ""
-        }
+        locationInitialValues
       ]
     }
   });
@@ -66,65 +48,49 @@ export default function LocationForm() {
   const handleCopy = (index: number) => {
     const values = getValues(`locations.${index}`);
     insert(index + 1, { ...values });
-    setStatesList((prev) => {
-      const newStates = [...prev];
-      newStates.splice(index + 1, 0, [...(prev[index] || [])]);
-      return newStates;
-    });
+  
   };
 
   const addEmptyFormValues = () => {
-    append({
-      venue: "",
-      altName: "",
-      address: "",
-      city: "",
-      country: "",
-      state: "",
-      zip: "",
-      isParkingFee: false,
-      parkingInfo: ""
-    });
-    setStatesList((prev) => [...prev, []]);
+    append(locationInitialValues);
   };
 
   useEffect(() => {
     const allCountries = Country.getAllCountries();
     setCountries(allCountries);
-    setStatesList(fields.map(() => []));
   }, []);
 
-const countriesWatched = watch("locations")?.map(loc => loc.country) || [];
+  const countriesWatched = watch("locations")?.map(loc => loc.country) || [];
 
-useEffect(() => {
-  // Ako nema lokacija, nema što raditi
-  if (!countriesWatched.length) return;
+  useEffect(() => {
+    if (!countriesWatched.length) return;
 
-  setStatesList(prev => {
-    const updatedStates = countriesWatched.map((countryCode, index) => {
-      // Ako nema country odabranog, vrati prazan array
-      if (!countryCode) return [];
+    setStatesList(prev => {
+      const updatedStates = countriesWatched.map((countryCode, index) => {
+        if (!countryCode) return [];
 
-      const states = State.getStatesOfCountry(countryCode);
+        const states = State.getStatesOfCountry(countryCode);
 
-      // Samo promijeni ako se razlikuje od postojećeg
-      if (JSON.stringify(prev[index]) === JSON.stringify(states)) {
-        return prev[index];
-      }
-      return states;
+        if (JSON.stringify(prev[index]) === JSON.stringify(states)) {
+          return prev[index];
+        }
+        return states;
+      });
+
+      return updatedStates;
     });
 
-    return updatedStates;
-  });
+    countriesWatched.forEach((countryCode, index) => {
+      if (countryCode) {
+        setValue(`locations.${index}.state`, "");
+      }
+    });
+  }, [JSON.stringify(countriesWatched), setValue]);
 
-  // Reset state field ako se promijenila država
-  countriesWatched.forEach((countryCode, index) => {
-    if (countryCode) {
-      setValue(`locations.${index}.state`, "");
-    }
-  });
-}, [JSON.stringify(countriesWatched), setValue]);
 
+  const handleCancel = () => {
+    form.reset()
+  }
 
   return (
     <FormProvider {...form}>
@@ -141,7 +107,7 @@ useEffect(() => {
             <button
               type="button"
               onClick={addEmptyFormValues}
-              className="border border-gray-400 bg-white font-bold text-black-700 px-3 py-1.5 rounded text-xs hover:bg-gray-200 transition"
+              className="cursor-pointer border border-gray-400 bg-white font-bold text-black-700 px-3 py-1.5 rounded text-xs hover:bg-gray-200 transition"
             >
               + Add New Location
             </button>
@@ -150,13 +116,13 @@ useEffect(() => {
           {fields.map((field, index) => (
             <div
               key={field.id}
-              className="w-full max-w-3xl bg-white p-6 rounded-lg mb-8 border border-gray-200 shadow"
+              className="w-full max-w-3xl bg-white p-6 rounded-lg mb-8 border border-gray-200"
             >
               <div className="mb-6">
                 <button
                   type="button"
                   onClick={() => handleCopy(index)}
-                  className="flex items-center space-x-1 text-sm text-black font-bold hover:text-gray-900 border border-gray-300 rounded px-4 py-2"
+                  className="flex cursor-pointer items-center space-x-1 text-sm text-black font-bold hover:text-gray-900 border border-gray-300 rounded px-4 py-2"
                 >
                   <ContentCopyIcon fontSize="small" />
                   <span>Copy</span>
@@ -222,68 +188,23 @@ useEffect(() => {
               </div>
 
               <div className="mb-6">
-                <label
-                  className="block mb-2 font-medium"
-                  htmlFor={`country-${index}`}
-                >
-                  Country
-                </label>
-                <select
-                  key={`country-${index}`}
-                  id={`country-${index}`}
-                  {...register(`locations.${index}.country`)}
-                  defaultValue={field.country}
-                  className={`w-full border rounded px-3 py-2 bg-white focus:outline-none focus:ring-2 ${errors.locations?.[index]?.country
-                    ? "border-red-600 focus:ring-red-400"
-                    : "border-gray-300 focus:ring-blue-400"
-                    }`}
-                >
-                  <option value="">Select country</option>
-                  {countries.map((country) => (
-                    <option key={country.isoCode} value={country.isoCode}>
-                      {countryCodeToFlagEmoji(country.isoCode)} {country.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.locations?.[index]?.country && (
-                  <p className="text-red-600 mt-1 text-sm">
-                    {errors.locations[index].country?.message}
-                  </p>
-                )}
+                <CountrySelectField
+                  fieldId={`country-${index}`}
+                  name={`locations.${index}.country`}
+                  countriesList={countries}
+                  errorMessage={errors?.locations?.[index]?.country}
+                  index={index} />
               </div>
-
               <div className="flex space-x-4 mb-6">
                 <div className="flex-1">
-                  <label
-                    className="block mb-2 font-medium"
-                    htmlFor={`state-${index}`}
-                  >
-                    State
-                  </label>
-                  <select
-                    key={`state-${index}`}
-                    id={`state-${index}`}
-                    {...register(`locations.${index}.state`)}
-                    defaultValue={field.state}
-                    className={`w-full border rounded px-3 py-2 bg-white focus:outline-none focus:ring-2 ${errors.locations?.[index]?.state
-                      ? "border-red-600 focus:ring-red-400"
-                      : "border-gray-300 focus:ring-blue-400"
-                      }`}
-                  >
-                    <option value="">Select state</option>
-                    {statesList[index]?.map((c) => (
-                      <option key={c.name} value={c.name}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.locations?.[index]?.state && (
-                    <p className="text-red-600 mt-1 text-sm">
-                      {errors.locations[index].state?.message}
-                    </p>
-                  )}
-                </div>
+                  <StateSelectField
+                    fieldId={`state-${index}`}
+                    name={`locations.${index}.state`}
+                    statesList={statesList}
+                    errorMessage={errors?.locations?.[index]?.state}
+                    index={index} />
 
+                </div>
                 <div className="flex-1">
                   <InputField
                     fieldId={`zip-${index}`}
@@ -297,9 +218,7 @@ useEffect(() => {
                   />
                 </div>
               </div>
-
               <hr className="border-t border-gray-200 my-6" />
-
               <div className="flex items-center space-x-2 mb-6">
                 <Controller
                   name={`locations.${index}.isParkingFee`}
@@ -319,7 +238,6 @@ useEffect(() => {
                   Parking Fee
                 </label>
               </div>
-
               <div className="mb-6">
                 <label
                   className="block mb-2 font-medium"
@@ -346,17 +264,17 @@ useEffect(() => {
               </div>
             </div>
           ))}
-
           <div className="w-full max-w-3xl flex justify-end space-x-4 mt-6">
             <button
               type="button"
-              className="px-16 py-1.5 border border-gray-300 rounded-lg bg-white font-semibold text-gray-700 hover:bg-gray-50 transition"
+              className="px-16 py-1.5 border border-gray-300 rounded-lg bg-white font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
+              onClick={() => handleCancel()}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-16 py-1.5 rounded-lg bg-purple-300 text-white font-semibold hover:bg-purple-400 transition"
+              className="px-16 py-1.5 rounded-lg bg-purple-500 text-white font-semibold hover:bg-blue-400 transition cursor-pointer"
             >
               Save
             </button>
