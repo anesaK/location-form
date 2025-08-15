@@ -45,6 +45,32 @@ export default function LocationForm() {
     console.log("Podaci o lokacijama:", data);
   };
 
+ /*
+  const onSubmit = async (data: LocationsData) => {
+    try{
+      const response = await fetch ("https://example.com/api/locations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok){
+        throw new Error (`Greska prilikom slanja: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("Result:", result);
+
+    } catch (error){
+      console.error("Error:", error);
+    }
+  };
+
+  */
+
+
   const handleCopy = (index: number) => {
     const values = getValues(`locations.${index}`);
     insert(index + 1, { ...values });
