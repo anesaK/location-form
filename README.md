@@ -1,93 +1,93 @@
 # Location Form
 
-**Location Form** je forma napravljena u **Next.js** (React framework) koja omogućava korisnicima unos i validaciju podataka o lokaciji.  
-Koristi **React Hook Form** i **Zod** za validaciju, te **Material UI** za moderan izgled.  
-Dodatno, koristi biblioteke za prikaz zastava i preuzimanje podataka o državama, regijama i gradovima.
+**Location Form** is a form built with **Next.js** (React framework) that allows users to input and validate location data.
+It uses **React Hook Form** and **Zod** for validation, and **Material UI** for a modern design.
+Additionally, it uses libraries for displaying flags and fetching data about countries and states/provinces.
 
 ---
 
+## Form Fields
 
-## Polja forme
+Users can enter the following information:
 
-Korisnik u formu unosi sljedeće podatke:
+- **Venue Title** – name of the venue (required) 
+- **Alt Name** – alternative name (optional) 
+- **Address** – location address (required) 
+- **City** – city name (required)  
+- **Country** – country (required, selectable from a list with flags)  
+- **State/Province** – region or province (required if the country has states)
+- **Zip/Postal** – postal code (required)
+- **Parking Fee** – switch to indicate whether there is a parking fee  
+- **Parking Info** – additional parking information (optional)dodatne informacije o parkingu (opcionalno)  
 
-- **Venue Title** – naziv mjesta (obavezno polje)  
-- **Alt Name** – alternativni naziv (opcionalno)  
-- **Address** – adresa lokacije (obavezno polje)  
-- **City** – naziv grada (obavezno polje)  
-- **Country** – država (obavezno polje, izbor iz liste sa zastavama)  
-- **State/Province** – regija ili pokrajina (obavezno ako država ima regije)  
-- **Zip/Postal** – poštanski broj (obavezno polje)  
-- **Parking Fee** – prekidač (Switch) za označavanje da li postoji naknada za parking  
-- **Parking Info** – dodatne informacije o parkingu (opcionalno)  
-
-## Sadržaj
-- [Tehnologije](#tehnologije)
-- [Instalacija](#instalacija)
-- [Korištenje](#korištenje)
-- [Skripte](#skripte)
-- [Funkcionalnosti](#funkcionalnosti)
-- [Licenca](#licenca)
-
----
-
-## Tehnologije
-
-- **Frontend Framework:** [Next.js]
-- **Programski jezik:** [TypeScript] 
-- **UI Biblioteka:** [Material UI (MUI)]
-- **State & Forme:** [React Hook Form] + [Zod]
-- **Stilizacija:** [Tailwind CSS]
-- **Pomoćne biblioteke:**  
-  - [`country-code-to-flag-emoji`] – prikaz zastava prema ISO kodovima država  
-  - [`country-state-city`]– lista država, regija i gradova
+## Usage
+- [Technologies]
+- [Installation]
+- [Usage]
+- [Scripts]
+- [Features]
+- [License]
 
 ---
 
-## Instalacija
+## Technologies
 
-Instaliraj sve zavisnosti:
+* **Frontend Framework:** [Next.js]
+* **Programming Language:** [TypeScript]
+* **UI Library:** [Material UI (MUI)]
+* **State & Forms:** [React Hook Form] + [Zod]
+* **Styling:** [Tailwind CSS]
+* **Helper Libraries:**
+  * [`country-code-to-flag-emoji`] – displays flags based on ISO country codes
+  * [`country-state-city`] – provides lists of countries and states
+
+
+---
+
+## Installation
+
+Install all dependencies::
 ```bash
 npm install
 ```
 
-Instaliraj razvojne zavisnosti:
+Install development dependencies::
 ```bash
 npm install -D typescript tailwindcss @tailwindcss/postcss eslint eslint-config-next @types/node @types/react @types/react-dom
 ```
 
 ---
 
-## Korištenje
+## Usage
 
-### Razvojni mod:
+### Development mode:
 ```bash
 npm run dev
 ```
 
-### Produkcijski build:
+### Production build:
 ```bash
 npm run build
 npm start
 ```
 
-### Lint provjera:
+### Lint check:
 ```bash
 npm run lint
 ```
-
 ---
 
-## Funkcionalnosti
+## Features
 
-- Next.js + TypeScript za brz i tipiziran razvoj
-- React Hook Form za upravljanje formama
-- Zod za validaciju na osnovu šema
-- Material UI komponente uz Tailwind CSS stilizaciju
-- Padajuće liste za države, regije i gradove sa emoji zastavama
+* Next.js + TypeScript for fast and typed development
+* React Hook Form for form management
+* Zod for schema-based validation
+* Material UI components with Tailwind CSS styling
+* Dropdown lists for countries, states, and with emoji flags
 
 
-## Autor
+
+## Author
 Anesa Kečo — [anesaK](https://github.com/anesaK)
 
 
