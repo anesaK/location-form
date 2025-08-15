@@ -7,7 +7,7 @@ Dodatno, koristi biblioteke za prikaz zastava i preuzimanje podataka o državama
 ---
 
 
-## 📋 Polja forme
+## Polja forme
 
 Korisnik u formu unosi sljedeće podatke:
 
